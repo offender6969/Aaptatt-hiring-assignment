@@ -1,15 +1,17 @@
 pipeline {
-    agent any
-    
+    agent {
+        docker {
+            image 'abhishekf5/maven-abhishek-docker-agent:v1'
+            args '--user root -v /var/run/docker.sock:/var/run/docker.sock'
+        }
+    }
+
     environment {
         DOCKER_IMAGE = "iamdivye/maven-cicd:${BUILD_NUMBER}"
-        DOCKER_REPO = "iamdivye/maven-cicd"
-        DOCKER_TAG = "latest"
         EC2_USERNAME = 'ubuntu'
         EC2_HOST = '3.82.207.251'
-        EC2_KEY_PATH = '/home/offender/jenkins_slave.pem' // Updated key path
+        EC2_KEY_PATH = '/home/offender/jenkins_slave.pem'
         WAR_FILE = 'Aaptatt-hiring-assignment/target/*.war'
-        DOCKERFILE_PATH = 'Dockerfile' // Dockerfile in the root directory
         CONTAINER_NAME = 'maven_prod'
         HOST_PORT = '8080'
         CONTAINER_PORT = '8080'
@@ -31,22 +33,26 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    docker.build("${DOCKER_IMAGE}", "-t ${DOCKER_REPO}:${DOCKER_TAG} -f ${DOCKERFILE_PATH} .")
-                    docker.withRegistry('https://index.docker.io/v1/', 'docker-cred') {
-                        docker.image("${DOCKER_IMAGE}").push("${DOCKER_TAG}")
+                    docker.build("${DOCKER_IMAGE}", "-f Dockerfile .")
+                }
+            }
+        }
+
+        stage('Run Docker Container') {
+            steps {
+                script {
+                    docker.withRegistry('', 'docker-cred') {
+                        sh "docker run -d -p ${HOST_PORT}:${CONTAINER_PORT} --name ${CONTAINER_NAME} ${DOCKER_IMAGE}"
                     }
                 }
             }
         }
 
-        stage('Run Docker Container on Remote EC2 Instance') {
+        stage('Deploy WAR') {
             steps {
                 script {
-                    sshagent(['github']) {
-                        sh "scp -i ${EC2_KEY_PATH} -o StrictHostKeyChecking=no ${DOCKERFILE_PATH} ${EC2_USERNAME}@${EC2_HOST}:~/"
-                        sh "scp -i ${EC2_KEY_PATH} -o StrictHostKeyChecking=no /var/jenkins_home/workspace/${JOB_NAME}/docker_data/${DOCKER_IMAGE}.tar ${EC2_USERNAME}@${EC2_HOST}:~/"
-                        sh "ssh -i ${EC2_KEY_PATH} -o StrictHostKeyChecking=no ${EC2_USERNAME}@${EC2_HOST} 'docker load -i ~/${DOCKER_IMAGE}.tar'"
-                        sh "ssh -i ${EC2_KEY_PATH} -o StrictHostKeyChecking=no ${EC2_USERNAME}@${EC2_HOST} 'docker run -d -p ${HOST_PORT}:${CONTAINER_PORT} --name ${CONTAINER_NAME} ${DOCKER_IMAGE}'"
+                    docker.image("${DOCKER_IMAGE}").inside {
+                        sh "docker cp /var/jenkins_home/workspace/${JOB_NAME}/${WAR_FILE} ${CONTAINER_NAME}:/usr/local/tomcat/webapps/ROOT.war"
                     }
                 }
             }
