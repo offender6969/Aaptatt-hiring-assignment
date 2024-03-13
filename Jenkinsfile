@@ -1,45 +1,50 @@
 pipeline {
-    agent any
-    
-    stages {
-        stage('Build') {
-            steps {
-                // Build the Maven application
-                sh 'mvn clean package -DskipTests'
-                sh 'mv $(find ./target -name "*.war") ./target/app.war'
-            }
-        }
-        
-        stage('Build Docker Image') {
-            steps {
-                // Build Docker image
-                script {
-                    docker.build('your-docker-image-name')
-                }
-            }
-        }
-        
-        stage('Tag Docker Image') {
-            steps {
-                // Tag the Docker image
-                script {
-                    docker.image('your-docker-image-name').tag("your-docker-image-name:latest")
-                }
-            }
-        }
-        
-        stage('Push Docker Image to Docker Hub') {
-            environment {
-                DOCKER_HUB_CREDENTIALS = 'your-docker-hub-credentials-id'
-            }
-            steps {
-                // Push the Docker image to Docker Hub
-                script {
-                    docker.withRegistry('https://index.docker.io/v1/', DOCKER_HUB_CREDENTIALS) {
-                        docker.image('your-docker-image-name').push('latest')
-                    }
-                }
-            }
-        }
+  agent any
+  
+  environment {
+    DOCKER_IMAGE = "iamdivye/maven-cicd:${BUILD_NUMBER}"
+    EC2_USERNAME = 'ec2-user'
+    EC2_HOST = 'your_remote_ec2_host'
+    EC2_KEY_PATH = ' /home/offender/jenkins_slave.pem'
+    WAR_FILE = 'Aaptatt-hiring-assignment/target/*.war'
+    DOCKERFILE_PATH = 'Aaptatt-hiring-assignment/Dockerfile'
+    CONTAINER_NAME = 'maven_prod'
+    HOST_PORT = '8080'
+    CONTAINER_PORT = '8080'
+  }
+
+  stages {
+    stage('Checkout') {
+      steps {
+        git branch: 'main', credentialsId: 'github', url: 'https://github.com/offender6969/Aaptatt-hiring-assignment'
+      }
     }
+
+    stage('Build and Test') {
+      steps {
+        sh 'mvn clean package -f Aaptatt-hiring-assignment'
+      }
+    }
+
+    stage('Build Docker Image') {
+      steps {
+        script {
+          docker.build("${DOCKER_IMAGE}", "-f ${DOCKERFILE_PATH} .")
+        }
+      }
+    }
+
+    stage('Run Docker Container on Remote EC2 Instance') {
+      steps {
+        script {
+          sshagent(['github']) {
+            sh "scp -i ${EC2_KEY_PATH} -o StrictHostKeyChecking=no /var/jenkins_home/workspace/${JOB_NAME}/${DOCKERFILE_PATH} ${EC2_USERNAME}@${EC2_HOST}:~/"
+            sh "scp -i ${EC2_KEY_PATH} -o StrictHostKeyChecking=no /var/jenkins_home/workspace/${JOB_NAME}/docker_data/${DOCKER_IMAGE}.tar ${EC2_USERNAME}@${EC2_HOST}:~/"
+            sh "ssh -i ${EC2_KEY_PATH} -o StrictHostKeyChecking=no ${EC2_USERNAME}@${EC2_HOST} 'docker load -i ~/${DOCKER_IMAGE}.tar'"
+            sh "ssh -i ${EC2_KEY_PATH} -o StrictHostKeyChecking=no ${EC2_USERNAME}@${EC2_HOST} 'docker run -d -p ${HOST_PORT}:${CONTAINER_PORT} --name ${CONTAINER_NAME} ${DOCKER_IMAGE}'"
+          }
+        }
+      }
+    }
+  }
 }
