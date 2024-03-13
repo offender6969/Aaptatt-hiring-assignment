@@ -6,6 +6,7 @@ pipeline {
             steps {
                 // Build the Maven application
                 sh 'mvn clean package -DskipTests'
+                sh 'mv $(find ./target -name "*.war") ./target/app.war'
             }
         }
         
