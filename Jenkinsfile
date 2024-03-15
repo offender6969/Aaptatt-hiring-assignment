@@ -20,7 +20,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', credentialsId: 'github', url: 'https://github.com/offender6969/Aaptatt-hiring-assignment'
+               git branch: 'main', url: 'https://github.com/offender6969/Aaptatt-hiring-assignment'
             }
         }
 
