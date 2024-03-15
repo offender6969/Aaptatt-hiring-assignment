@@ -20,13 +20,13 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-               git branch: 'master', url: 'https://github.com/offender6969/Aaptatt-hiring-assignment'
+               git branch: 'offender6969-patch-1', url: 'https://github.com/offender6969/Aaptatt-hiring-assignment'
             }
         }
 
         stage('Build and Test') {
             steps {
-                sh 'mvn clean package -f Aaptatt-hiring-assignment'
+                sh 'mvn clean package'
             }
         }
 
