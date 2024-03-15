@@ -7,9 +7,9 @@ pipeline {
     }
 
     environment {
-        DOCKER_IMAGE = "iamdivye/maven-cicd:${BUILD_NUMBER}"
+        DOCKER_IMAGE = "iamdivye/maven-cicd"
         EC2_USERNAME = 'ubuntu'
-        EC2_HOST = '3.82.207.251'
+        EC2_HOST = '34.229.49.179'
         EC2_KEY_PATH = '/home/offender/jenkins_slave.pem'
         WAR_FILE = 'Aaptatt-hiring-assignment/target/*.war'
         CONTAINER_NAME = 'maven_prod'
