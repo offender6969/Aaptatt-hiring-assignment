@@ -38,22 +38,13 @@ pipeline {
             }
         }
 
-        stage('Run Docker Container') {
+        stage('Push image') {
             steps {
                 script {
-                    docker.withRegistry('', 'docker-cred') {
-                        sh "docker run -d -p ${HOST_PORT}:${CONTAINER_PORT} --name ${CONTAINER_NAME} ${DOCKER_IMAGE}"
-                    }
-                }
-            }
-        }
-
-        stage('Deploy WAR') {
-            steps {
-                script {
-                    docker.image("${DOCKER_IMAGE}").inside {
-                        sh "docker cp /var/jenkins_home/workspace/${JOB_NAME}/${WAR_FILE} ${CONTAINER_NAME}:/usr/local/tomcat/webapps/ROOT.war"
-                    }
+                    docker.withRegistry('https://registry.hub.docker.com', 'git') {                   
+                        app.push("${env.BUILD_NUMBER}")            
+                        app.push("latest")        
+                    }    
                 }
             }
         }
