@@ -12,7 +12,7 @@ pipeline {
         EC2_HOST = '34.229.49.179'
         EC2_KEY_PATH = '/home/offender/jenkins_slave.pem'
         WAR_FILE = 'Aaptatt-hiring-assignment/target/*.war'
-        CONTAINER_NAME = 'maven_prod'
+        CONTAINER_NAME = 'maven1'
         HOST_PORT = '8081'
         CONTAINER_PORT = '8080'
     }
