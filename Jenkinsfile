@@ -30,21 +30,28 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    docker.build("${DOCKER_IMAGE}", "-f Dockerfile .")
+                    // Build Docker image and tag it
+                    docker.build("${DOCKER_IMAGE}:${BUILD_NUMBER}", "-f Dockerfile .")
                 }
             }
         }
 
-        stage('Log in to Docker Hub') {
+        stage('Login to Docker Hub') {
             steps {
                 script {
-                    // 
-                    withCredentials([string(credentialsId: DOCKER_HUB_CREDENTIALS, variable: 'DOCKER_HUB_CREDENTIALS')]) {
-                        sh 'echo $DOCKER_HUB_CREDENTIALS | docker login -u <your-dockerhub-username> --password-stdin'
+                    // Log in to Docker Hub
+                    withCredentials([usernamePassword(credentialsId: 'docker-cred', usernameVariable: 'DOCKER_HUB_USERNAME', passwordVariable: 'DOCKER_HUB_PASSWORD')]) {
+                        sh 'docker login -u $DOCKER_HUB_USERNAME --password-stdin <<< $DOCKER_HUB_PASSWORD'
                     }
+                }
+            }
+        }
 
-                    // Push the Docker image with "latest" tag to Docker Hub
-                    sh "docker push ${DOCKER_IMAGE}:latest" // Corrected variable interpolation syntax
+        stage('Push to Docker Hub') {
+            steps {
+                script {
+                    // Push the Docker image to Docker Hub
+                    sh "docker push ${DOCKER_IMAGE}:${BUILD_NUMBER}"
                 }
             }
         }
