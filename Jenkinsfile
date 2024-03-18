@@ -7,17 +7,17 @@ pipeline {
     }
 
     environment {
-        DOCKER_IMAGE = "iamdivye/maven-cicd" 
-        WAR_FILE = 'Aaptatt-hiring-assignment/target/*.war'
+        DOCKER_IMAGE = 'iamdivye/maven-cicd'
         CONTAINER_NAME = 'maven1'
         HOST_PORT = '8081'
         CONTAINER_PORT = '8080'
+        DOCKER_HUB_CREDENTIALS = 'docker-cred' 
     }
 
     stages {
         stage('Checkout') {
             steps {
-               git branch: 'offender6969-patch-1', url: 'https://github.com/offender6969/Aaptatt-hiring-assignment'
+                git branch: 'offender6969-patch-1', url: 'https://github.com/offender6969/Aaptatt-hiring-assignment'
             }
         }
 
@@ -35,13 +35,16 @@ pipeline {
             }
         }
 
-        stage('Push image') {
+        stage('Log in to Docker Hub') {
             steps {
                 script {
-                    docker.withRegistry('https://registry.hub.docker.com', 'docker-cred') {                   
-                        // app.push("${env.BUILD_NUMBER}")            
-                         app.push("latest")        
-                    }    
+                    // 
+                    withCredentials([string(credentialsId: DOCKER_HUB_CREDENTIALS, variable: 'DOCKER_HUB_CREDENTIALS')]) {
+                        sh 'echo $DOCKER_HUB_CREDENTIALS | docker login -u <your-dockerhub-username> --password-stdin'
+                    }
+
+                    // Push the Docker image with "latest" tag to Docker Hub
+                    sh "docker push ${DOCKER_IMAGE}:latest" // Corrected variable interpolation syntax
                 }
             }
         }
