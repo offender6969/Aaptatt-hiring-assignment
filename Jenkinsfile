@@ -7,7 +7,7 @@ pipeline {
     }
 
     environment {
-        DOCKER_IMAGE = "iamdivye/maven-cicd  
+        DOCKER_IMAGE = "iamdivye/maven-cicd" 
         WAR_FILE = 'Aaptatt-hiring-assignment/target/*.war'
         CONTAINER_NAME = 'maven1'
         HOST_PORT = '8081'
