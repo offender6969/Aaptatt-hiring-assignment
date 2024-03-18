@@ -7,10 +7,7 @@ pipeline {
     }
 
     environment {
-        DOCKER_IMAGE = "iamdivye/maven-cicd"
-        EC2_USERNAME = 'ubuntu'
-        EC2_HOST = '34.229.49.179'
-        EC2_KEY_PATH = '/home/offender/jenkins_slave.pem'
+        DOCKER_IMAGE = "iamdivye/maven-cicd  
         WAR_FILE = 'Aaptatt-hiring-assignment/target/*.war'
         CONTAINER_NAME = 'maven1'
         HOST_PORT = '8081'
@@ -43,7 +40,7 @@ pipeline {
                 script {
                     docker.withRegistry('https://registry.hub.docker.com', 'docker-cred') {                   
                         // app.push("${env.BUILD_NUMBER}")            
-                        // app.push("latest")        
+                         app.push("latest")        
                     }    
                 }
             }
