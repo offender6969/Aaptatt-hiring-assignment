@@ -36,12 +36,13 @@ pipeline {
             }
         }
 
+         stages {
         stage('Login to Docker Hub') {
             steps {
                 script {
-                    // Log in to Docker Hub
-                     withCredentials([usernamePassword(credentialsId: 'docker-cred', usernameVariable: 'DOCKER_HUB_USERNAME', passwordVariable: 'DOCKER_HUB_PASSWORD')]) {
-                        sh 'docker login -u $DOCKER_HUB_USERNAME --password-stdin <<< $DOCKER_HUB_PASSWORD'
+                    // Log in to Docker Hub using Jenkins credentials
+                    withCredentials([usernamePassword(credentialsId: 'docker-cred', usernameVariable: 'DOCKERHUB_USERNAME', passwordVariable: 'DOCKERHUB_PASSWORD')]) {
+                        sh "echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin"
                     }
                 }
             }
